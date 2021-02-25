@@ -3,9 +3,13 @@ package com.test.rest.rest.controler;
 import com.test.rest.rest.controler.exception.UserNotFoundException;
 import com.test.rest.rest.domain.User;
 import com.test.rest.rest.service.UserService;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 public class UserControler {
@@ -22,8 +26,12 @@ public class UserControler {
     }
 
     @GetMapping("users/{id}")
-    public User getById(@PathVariable("id") Long id){
-        return userService.getById(id).orElseThrow(()->new UserNotFoundException(id));
+    public EntityModel<User> getById(@PathVariable("id") Long id){
+        User user = userService.getById(id).orElseThrow(() -> new UserNotFoundException(id));
+        return EntityModel.of(user,
+                linkTo(methodOn(UserControler.class).getById(id)).withSelfRel(),
+                linkTo(methodOn(UserControler.class).getAll()).withRel("users")
+        );
     }
 
     @PostMapping("users")
