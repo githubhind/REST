@@ -3,11 +3,14 @@ package com.test.rest.rest.controler;
 import com.test.rest.rest.controler.exception.UserNotFoundException;
 import com.test.rest.rest.domain.User;
 import com.test.rest.rest.service.UserService;
+import org.hibernate.EntityMode;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
@@ -21,8 +24,17 @@ public class UserControler {
     }
 
     @GetMapping("users")
-    public List<User> getAll(){
-        return userService.getAll();
+    public CollectionModel<EntityModel<User>> getAll(){
+        List<EntityModel<User>> users = userService.getAll().stream()
+                .map(user -> EntityModel.of(
+                        user,
+                        linkTo(methodOn(UserControler.class).getById(user.getId())).withSelfRel(),
+                        linkTo(methodOn(UserControler.class).getAll()).withRel("users")
+                )).collect(Collectors.toList());
+        return CollectionModel.of(
+                users,
+                linkTo(methodOn(UserControler.class).getAll()).withSelfRel()
+                );
     }
 
     @GetMapping("users/{id}")
